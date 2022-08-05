@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "689494259242",
+    "project_id": "near-connector-4245f",
+    "storage_bucket": "near-connector-4245f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:689494259242:android:3920bdde79a1d138723553",
+        "android_client_info": {
+          "package_name": "com.example.nearflutterconnector"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "689494259242-cfkrrdr8uh9ih8p95rj0q9l51turu8pd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAx44GLqiZG9jju8ml3uvSbrKB7vKkcG0Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "689494259242-cfkrrdr8uh9ih8p95rj0q9l51turu8pd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "689494259242-7gjsrcenv86e30c8dosu6l44co74jdan.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.nearflutterconnector"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -9,13 +9,15 @@ class AppConstants {
   static const String globalServer =
       'https://immense-eyrie-01283.herokuapp.com';
   static const String currentServer = globalServer;
-  static const String nearSerializationUrl = '$currentServer/serialize';
-  static const String nearSignUrl = '$currentServer/sign';
+  static const String nearSerializationUrl = '$currentServer/serializeTransaction';
+  static const String nearSignUrl = '$currentServer/serializeSignedTransaction';
   static const String nearSignInSuccessUrl = '$currentServer/success';
   static const String nearSignInFailUrl = '$currentServer/failure';
 
   static const String transactionSuccessMessage = 'Transaction Successful!';
   static const String transactionFailedMessage = 'Transaction failed';
+  static const String internetConnectionErrorMessage =
+      'Something went wronge, please make sure you are connected to the internet and try again';
   static const String dynamicLinkPrefex = 'https://nearconnector.page.link';
   static const String dynamicLinkTarget =
       'https://nearconnector.page.link.com/wallet&account_id=koko&public_key=357891987&all_keys=11235234123';

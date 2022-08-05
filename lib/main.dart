@@ -1,115 +1,364 @@
+import 'dart:convert';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:nearflutterconnector/app_constants.dart';
+import 'package:nearflutterconnector/dart/transaction_api.dart';
+import 'package:nearflutterconnector/models/transaction.dart';
+import 'package:nearflutterconnector/models/user_data.dart';
+import 'package:nearflutterconnector/wallet/wallet.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // iOS requires you run in release mode to test dynamic links ("flutter run --release").
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: Scaffold(
+          appBar: AppBar(
+            title: const Text('NEAR Connector'),
+          ),
+          body: const MyHomePage()),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
+  const MyHomePage({Key? key}) : super(key: key);
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  UserData userData = UserData.initEmptyUserData();
+  Transaction transaction = Transaction.initEmptyTransaction();
+  String methodArgs = '{}';
+  FirebaseDynamicLinks dynamicLink = FirebaseDynamicLinks.instance;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+  @override
+  void initState() {
+    super.initState();
+    _setLoggedInUserId();
+  }
+
+  Future<void> _setLoggedInUserId() async {
+    dynamicLink.onLink.listen((dynamicLinkData) {
+      if (dynamicLinkData.link.path.contains('.')) {
+        setState(() {
+          userData.accountId = dynamicLinkData.link.path.replaceFirst('/', '');
+        });
+      }
+    }).onError((error) {
+      print(error.message);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: SingleChildScrollView(
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+          children: [
+            _buildHorizontalSpace(),
+            _buildWelcomeToApp(),
+            _buildHorizontalSpace(),
+            _buildKeysGenerationSection(),
+            _buildHorizontalSpace(),
+            _buildSignInSection(),
+            _buildHorizontalSpace(),
+            _buildTransferSection(),
+            _buildHorizontalSpace(),
+            _buildMethodCallSection(),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  _buildMethodCallSection() {
+    if (userData.accountId.isNotEmpty &&
+        userData.requestedFullAccess == false) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Column(children: [
+            _buildMethodNameInput(),
+            _buildMethodArgsInput(),
+            _buildCallMethodButton(),
+            _buildMethodCallStatus(),
+          ]),
+        ),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildTransferSection() {
+    if (userData.accountId.isNotEmpty && userData.requestedFullAccess) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Column(children: [
+            _buildTransferNearInput(),
+            _buildSendNearButton(),
+            _buildTransferStatus(),
+          ]),
+        ),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildSignInSection() {
+    if (userData.publicKey.isNotEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+          child: Column(children: [
+            _buildNearSignInButtons(),
+            _buildWelcomeAccountId(),
+          ]),
+        ),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildKeysGenerationSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(children: [
+          _buildGenerateKeysButton(),
+          _buildCopyableText("Public Key", userData.publicKey),
+          _buildCopyableText("Private Key", userData.privateKey),
+        ]),
+      ),
+    );
+  }
+
+  _buildCopyableText(String title, String longString) {
+    if (longString.isNotEmpty) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+              "${title.toUpperCase()}: ${longString.substring(0, 10)}...${longString.substring(longString.length - 10, longString.length)}"),
+          InkWell(
+              onTap: () {
+                Clipboard.setData(ClipboardData(text: longString));
+              },
+              child: const Icon(Icons.copy))
+        ],
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildTransferStatus() {
+    if (transaction.actionType == 'transfer' && transaction.hash.isNotEmpty) {
+      return Column(
+        children: [
+          _buildCopyableText("Signature", transaction.signature.toString()),
+          _buildCopyableText("Tx. Hash", transaction.hash),
+          _buildTransactionMessage(transaction.returnMessage),
+        ],
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildMethodCallStatus() {
+    if (transaction.actionType == 'function_call' &&
+        transaction.hash.isNotEmpty) {
+      return Column(
+        children: [
+          _buildCopyableText("Signature", transaction.signature.toString()),
+          _buildCopyableText("Tx. Hash", transaction.hash),
+          _buildTransactionMessage(transaction.returnMessage),
+        ],
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildWelcomeToApp() {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+        child: Text('Welcome to ${AppConstants.appContractId}'),
+      ),
+    );
+  }
+
+  _buildMethodNameInput() {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          if (value.isNotEmpty) {
+            transaction.methodName = value;
+          } else {
+            transaction.methodName = '';
+          }
+        });
+      },
+      decoration:
+          const InputDecoration(labelText: "Enter a contract method name"),
+    );
+  }
+
+  _buildMethodArgsInput() {
+    if (userData.accountId.isNotEmpty && transaction.methodName.isNotEmpty) {
+      return TextField(
+        onChanged: (value) {
+          setState(() {
+            if (value.isNotEmpty) {
+              methodArgs = value;
+            } else {
+              methodArgs = '{}';
+            }
+          });
+        },
+        decoration: InputDecoration(
+            labelText:
+                AppConstants.getArgumentsInputLabel(transaction.methodName)),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildTransferNearInput() {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          if (value.isNotEmpty) {
+            transaction.amount = value;
+          } else {
+            transaction.amount = '0';
+          }
+        });
+      },
+      decoration: const InputDecoration(labelText: AppConstants.amountToDonate),
+      keyboardType: TextInputType.number,
+      inputFormatters: <TextInputFormatter>[
+        FilteringTextInputFormatter.digitsOnly
+      ],
+    );
+  }
+
+  _buildTransactionMessage(String message) {
+    if (message.isNotEmpty) {
+      return Text(message);
+    } else {
+      return Container();
+    }
+  }
+
+  _buildWelcomeAccountId() {
+    if (userData.accountId.isNotEmpty) {
+      return Text('Welcome ${userData.accountId}');
+    } else {
+      return Container();
+    }
+  }
+
+  _buildHorizontalSpace() {
+    return const SizedBox(
+      height: 2,
+    );
+  }
+
+  _buildSendNearButton() {
+    if (transaction.amount.isNotEmpty && double.parse(transaction.amount) > 0) {
+      return ElevatedButton(
+        onPressed: () async {
+          transaction.actionType = 'transfer';
+          transaction = await DartTransactionManager.sendTransaction(
+              transaction, userData);
+          setState(() {});
+        },
+        child: const Text('Send Near'),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildCallMethodButton() {
+    if (transaction.methodName.isNotEmpty) {
+      return ElevatedButton(
+        onPressed: () async {
+          transaction.actionType = 'function_call';
+          transaction.methodArgs = jsonDecode(methodArgs);
+          transaction = await DartTransactionManager.sendTransaction(
+              transaction, userData);
+          setState(() {});
+        },
+        child: const Text('Call Method'),
+      );
+    } else {
+      return Container();
+    }
+  }
+
+  _buildGenerateKeysButton() {
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          userData = DartTransactionManager.generateKeyPair();
+        });
+      },
+      child: const Text('Generate Keys'),
+    );
+  }
+
+  _buildNearSignInButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            Wallet.requestFullAccess(userData);
+            setState(() {
+              userData.requestedFullAccess = true;
+            });
+          },
+          child: const Text('Full Access'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Wallet.requestLimitedAccess(userData);
+            setState(() {
+              userData.requestedFullAccess = false;
+            });
+          },
+          child: const Text('Limited Access'),
+        ),
+      ],
     );
   }
 }

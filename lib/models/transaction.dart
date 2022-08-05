@@ -12,36 +12,39 @@ class Transaction {
   String returnMessage;
   String methodName;
   Map<String, dynamic> methodArgs;
-  /*
-  Transaction(){
-    this.actionType =
-    this.sender,
-    this.publicKey,
-    this.amount,
-    this.receiver,
-    this.networkId,
-    this.blockHash,
-    this.nonce,
-    this.signature,
-    this.hash,
-    this.returnMessage,
-    this.methodName,
-    this.methodArgs
-  }*/
+
   Transaction(
-      this.actionType,
-      this.sender,
-      this.publicKey,
-      this.amount,
-      this.receiver,
-      this.networkId,
-      this.blockHash,
-      this.nonce,
-      this.signature,
-      this.hash,
-      this.returnMessage,
-      this.methodName,
-      this.methodArgs);
+      {required this.actionType,
+      required this.sender,
+      required this.publicKey,
+      required this.amount,
+      required this.receiver,
+      required this.networkId,
+      required this.blockHash,
+      required this.nonce,
+      required this.signature,
+      required this.hash,
+      required this.returnMessage,
+      required this.methodName,
+      required this.methodArgs});
+
+  //create transaction
+  static Transaction initEmptyTransaction() {
+    return Transaction(
+        actionType: '',
+        amount: '',
+        blockHash: '',
+        hash: '',
+        methodArgs: {},
+        methodName: '',
+        networkId: '',
+        nonce: 0,
+        publicKey: '',
+        receiver: '',
+        returnMessage: '',
+        sender: '',
+        signature: {});
+  }
 
   Map<String, dynamic> toJson() => {
         "action_type": actionType,

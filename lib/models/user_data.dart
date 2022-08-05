@@ -7,9 +7,19 @@ class UserData {
   KeyPair keyPair;
   bool requestedFullAccess;
 
-  UserData(this.privateKey, this.publicKey, this.accountId, this.keyPair, this.requestedFullAccess);
+  UserData(
+      {required this.privateKey,
+      required this.publicKey,
+      required this.accountId,
+      required this.keyPair,
+      required this.requestedFullAccess});
 
-  static UserData initUserData() {
-    return UserData('', '', '', KeyPair(PrivateKey([]), PublicKey([])), false);
+  static UserData initEmptyUserData() {
+    return UserData(
+        accountId: '',
+        privateKey: '',
+        publicKey: '',
+        keyPair: KeyPair(PrivateKey([]), PublicKey([])),
+        requestedFullAccess: false);
   }
 }
