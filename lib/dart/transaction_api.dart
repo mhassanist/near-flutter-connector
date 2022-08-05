@@ -83,6 +83,5 @@ class DartTransactionManager {
     transaction.hash =
         await RemoteTransactionManage.serializeSignedTransaction(transaction);
     return transaction;
-    // setState(() {});
   }
 }

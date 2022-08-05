@@ -9,8 +9,10 @@ class AppConstants {
   static const String globalServer =
       'https://immense-eyrie-01283.herokuapp.com';
   static const String currentServer = globalServer;
-  static const String nearSerializationUrl = '$currentServer/serializeTransaction';
-  static const String nearSignUrl = '$currentServer/serializeSignedTransaction';
+  static const String nearSerializeTransactionUrl =
+      '$currentServer/serializeTransaction';
+  static const String nearSerializeSignedTransactionUrl =
+      '$currentServer/serializeSignedTransaction';
   static const String nearSignInSuccessUrl = '$currentServer/success';
   static const String nearSignInFailUrl = '$currentServer/failure';
 
