@@ -2,13 +2,14 @@ import 'dart:typed_data';
 import 'package:bs58/bs58.dart';
 import 'package:nearflutterconnector/app_constants.dart';
 import 'package:nearflutterconnector/models/user_data.dart';
-import 'package:nearflutterconnector/near_rpc/rpc_api.dart';
-import 'package:nearflutterconnector/remote/transaction_api.dart';
+import 'package:nearflutterconnector/services/remote_transaction_serializer.dart';
 import '../models/transaction.dart';
 import 'package:ed25519_edwards/ed25519_edwards.dart' as ed;
 
+import 'near_remote_rpc_api.dart';
+
 class DartTransactionManager {
-  //generateKeyPair
+  //generateKeyPair using ed library
   static UserData generateKeyPair() {
     var keyPair = ed.generateKey();
     return UserData(
@@ -16,38 +17,27 @@ class DartTransactionManager {
         keyPair: keyPair,
         privateKey: base58.encode(Uint8List.fromList(keyPair.privateKey.bytes)),
         publicKey: base58.encode(Uint8List.fromList(keyPair.publicKey.bytes)),
-        requestedFullAccess: false);
+        );
   }
 
-  //signTransaction
+  //signTransaction by user's private key using ed library
   static Uint8List signTransaction(
       ed.PrivateKey privateKey, Uint8List transaction) {
     return ed.sign(privateKey, transaction);
   }
 
-  static Uint8List listFromMap(Map map) {
-    Uint8List list = Uint8List(map.length);
-    map.forEach((key, value) {
-      list[int.parse(key)] = value;
-    });
-    return list;
-  }
 
-  static Map mapFromList(Uint8List list) {
-    Map map = {};
-    for (var i = 0; i < list.length; i++) {
-      map[i.toString()] = list[i];
-    }
-    return map;
-  }
-
-  // sendTransaction
-  static Future<Transaction> sendTransaction(
-      Transaction transaction, UserData userData) async {
-    transaction.returnMessage = AppConstants.internetConnectionErrorMessage;
-    transaction = _initTransaction(transaction, userData);
+  // sendTransaction to NEAR RPC API
+  static Future<Transaction> sendTransaction(UserData userData, contractName) async {
+    Transaction transaction = Transaction ();
+    transaction.sender = userData.accountId;
+    transaction.receiver = contractName;
+    transaction.networkId = transaction.sender!.substring(
+    transaction.sender!.lastIndexOf('.') + 1, transaction.sender!.length);
+    transaction.publicKey = userData.publicKey;
+        
     Transaction signedTransaction = await _signTransaction(transaction, userData);
-    if (transaction.hash.isNotEmpty) {
+    if (transaction.hash!.isNotEmpty) {
       bool transactionSucceeded =
           await RpcApi.broadcastTransaction(signedTransaction);
       transactionSucceeded
@@ -57,16 +47,6 @@ class DartTransactionManager {
     return signedTransaction;
   }
 
-  static Transaction _initTransaction(
-      Transaction transaction, UserData userData) {
-    transaction.returnMessage = '';
-    transaction.receiver = AppConstants.appContractId;
-    transaction.sender = userData.accountId;
-    transaction.networkId = transaction.sender.substring(
-        transaction.sender.lastIndexOf('.') + 1, transaction.sender.length);
-    transaction.publicKey = userData.publicKey;
-    return transaction;
-  }
 
   static Future<Transaction> _signTransaction(
       Transaction transaction, UserData userData) async {
@@ -83,5 +63,20 @@ class DartTransactionManager {
     transaction.hash =
         await RemoteTransactionManage.serializeSignedTransaction(transaction);
     return transaction;
+  }
+  static Uint8List listFromMap(Map map) {
+    Uint8List list = Uint8List(map.length);
+    map.forEach((key, value) {
+      list[int.parse(key)] = value;
+    });
+    return list;
+  }
+
+  static Map mapFromList(Uint8List list) {
+    Map map = {};
+    for (var i = 0; i < list.length; i++) {
+      map[i.toString()] = list[i];
+    }
+    return map;
   }
 }

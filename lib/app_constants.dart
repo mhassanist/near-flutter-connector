@@ -2,12 +2,11 @@ class AppConstants {
   static const String contentType = "Content-Type";
   static const String applicationJson = "application/json";
   static const String nearRpcUrl = 'https://archival-rpc.testnet.near.org';
-  static const String appContractId = 'friendbook.hamzatest.testnet';
 
   static const String nearSignInUrl = 'https://wallet.testnet.near.org/login/?';
   static const String localServer = 'http://10.0.2.2:8080';
   static const String globalServer =
-      'https://immense-eyrie-01283.herokuapp.com';
+      'https://near-transaction-serializer.herokuapp.com';
   static const String currentServer = globalServer;
   static const String nearSerializeTransactionUrl =
       '$currentServer/serializeTransaction';

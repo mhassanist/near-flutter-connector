@@ -1,22 +1,17 @@
 import 'dart:convert';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:nearflutterconnector/app_constants.dart';
-import 'package:nearflutterconnector/dart/transaction_api.dart';
+import 'package:nearflutterconnector/services/local_transaction_api.dart';
 import 'package:nearflutterconnector/models/transaction.dart';
 import 'package:nearflutterconnector/models/user_data.dart';
-import 'package:nearflutterconnector/wallet/wallet.dart';
+import 'package:nearflutterconnector/services/wallet.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // iOS requires you run in release mode to test dynamic links ("flutter run --release").
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
   runApp(const MyApp());
 }
 
@@ -32,7 +27,7 @@ class MyApp extends StatelessWidget {
       ),
       home: Scaffold(
           appBar: AppBar(
-            title: const Text('NEAR Connector'),
+            title: const Text('NEAR Flutter Connector'),
           ),
           body: const MyHomePage()),
     );
@@ -47,9 +42,12 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   UserData userData = UserData.initEmptyUserData();
-  Transaction transaction = Transaction.initEmptyTransaction();
+  Transaction transaction = Transaction();
   String methodArgs = '{}';
   FirebaseDynamicLinks dynamicLink = FirebaseDynamicLinks.instance;
+
+  var _textContractNameController = TextEditingController();
+  var _textAccountIdController = TextEditingController();
 
   @override
   void initState() {
@@ -76,13 +74,14 @@ class _MyHomePageState extends State<MyHomePage> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            _buildHorizontalSpace(),
-            _buildWelcomeToApp(),
-            _buildHorizontalSpace(),
             _buildKeysGenerationSection(),
             _buildHorizontalSpace(),
-            _buildSignInSection(),
+            _buildEnterSmartContractName(),
             _buildHorizontalSpace(),
+            _buildHorizontalSpace(),
+            _buildWalletAccessSection(),
+            _buildHorizontalSpace(),
+            _buildEnterAccountId(),
             _buildTransferSection(),
             _buildHorizontalSpace(),
             _buildMethodCallSection(),
@@ -93,48 +92,48 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildMethodCallSection() {
-    if (userData.accountId.isNotEmpty &&
-        userData.requestedFullAccess == false) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Column(children: [
-            _buildMethodNameInput(),
-            _buildMethodArgsInput(),
-            _buildCallMethodButton(),
-            _buildMethodCallStatus(),
-          ]),
-        ),
-      );
-    } else {
-      return Container();
-    }
+    //if (userData.accountId.isNotEmpty &&
+    //    userData.requestedFullAccess == false) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(children: [
+          _buildMethodNameInput(),
+          _buildMethodArgsInput(),
+          _buildCallMethodButton(),
+          _buildMethodCallStatus(),
+        ]),
+      ),
+    );
+    // } else {
+    //   return Container();
+    // }
   }
 
   _buildTransferSection() {
-    if (userData.accountId.isNotEmpty && userData.requestedFullAccess) {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Column(children: [
-            _buildTransferNearInput(),
-            _buildSendNearButton(),
-            _buildTransferStatus(),
-          ]),
-        ),
-      );
-    } else {
-      return Container();
-    }
+    //if (userData.accountId.isNotEmpty && userData.requestedFullAccess) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(children: [
+          _buildTransferNearInput(),
+          _buildSendNearButton(),
+          _buildTransferStatus(),
+        ]),
+      ),
+    );
+    //  } else {
+    //  return Container();
+    //}
   }
 
-  _buildSignInSection() {
+  _buildWalletAccessSection() {
     if (userData.publicKey.isNotEmpty) {
       return Card(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
           child: Column(children: [
-            _buildNearSignInButtons(),
+            _buildFullLimitedAccessButtons(),
             _buildWelcomeAccountId(),
           ]),
         ),
@@ -177,12 +176,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildTransferStatus() {
-    if (transaction.actionType == 'transfer' && transaction.hash.isNotEmpty) {
+    if (transaction.actionType == 'transfer' && transaction.hash!.isNotEmpty) {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
-          _buildCopyableText("Tx. Hash", transaction.hash),
-          _buildTransactionMessage(transaction.returnMessage),
+          _buildCopyableText("Tx. Hash", transaction.hash!),
+          _buildTransactionMessage(transaction.returnMessage!),
         ],
       );
     } else {
@@ -192,12 +191,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _buildMethodCallStatus() {
     if (transaction.actionType == 'function_call' &&
-        transaction.hash.isNotEmpty) {
+        transaction.hash!.isNotEmpty) {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
-          _buildCopyableText("Tx. Hash", transaction.hash),
-          _buildTransactionMessage(transaction.returnMessage),
+          _buildCopyableText("Tx. Hash", transaction.hash!),
+          _buildTransactionMessage(transaction.returnMessage!),
         ],
       );
     } else {
@@ -205,12 +204,33 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  _buildWelcomeToApp() {
-    return const Card(
+  _buildEnterAccountId() {
+    return Card(
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-        child: Text('Welcome to ${AppConstants.appContractId}'),
-      ),
+          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          child: Column(
+            children: [
+              const Text("Enter Account Id"),
+              TextField(
+                controller: _textAccountIdController,
+              )
+            ],
+          )),
+    );
+  }
+
+  _buildEnterSmartContractName() {
+    return Card(
+      child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          child: Column(
+            children: [
+              const Text("Enter Contract Name"),
+              TextField(
+                controller: _textContractNameController,
+              )
+            ],
+          )),
     );
   }
 
@@ -231,24 +251,24 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildMethodArgsInput() {
-    if (userData.accountId.isNotEmpty && transaction.methodName.isNotEmpty) {
-      return TextField(
-        onChanged: (value) {
-          setState(() {
-            if (value.isNotEmpty) {
-              methodArgs = value;
-            } else {
-              methodArgs = '{}';
-            }
-          });
-        },
-        decoration: InputDecoration(
-            labelText:
-                AppConstants.getArgumentsInputLabel(transaction.methodName)),
-      );
-    } else {
-      return Container();
-    }
+    //if (userData.accountId.isNotEmpty && transaction.methodName.isNotEmpty) {
+    return TextField(
+      onChanged: (value) {
+        setState(() {
+          if (value.isNotEmpty) {
+            methodArgs = value;
+          } else {
+            methodArgs = '{}';
+          }
+        });
+      },
+      decoration: InputDecoration(
+          labelText:
+              AppConstants.getArgumentsInputLabel(transaction.methodName!)),
+    );
+    //} else {
+    return Container();
+    //}
   }
 
   _buildTransferNearInput() {
@@ -293,12 +313,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildSendNearButton() {
-    if (transaction.amount.isNotEmpty && double.parse(transaction.amount) > 0) {
+    if (transaction.amount!.isNotEmpty && double.parse(transaction.amount!) > 0) {
       return ElevatedButton(
         onPressed: () async {
           transaction.actionType = 'transfer';
+          var contractName = _textContractNameController.text.toString();
+
           transaction = await DartTransactionManager.sendTransaction(
-              transaction, userData);
+              userData, contractName);
           setState(() {});
         },
         child: const Text('Send Near'),
@@ -309,13 +331,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildCallMethodButton() {
-    if (transaction.methodName.isNotEmpty) {
+    if (transaction.methodName!.isNotEmpty) {
       return ElevatedButton(
         onPressed: () async {
           transaction.actionType = 'function_call';
           transaction.methodArgs = jsonDecode(methodArgs);
+          var contractName = _textContractNameController.text.toString();
+
           transaction = await DartTransactionManager.sendTransaction(
-              transaction, userData);
+              userData, contractName);
           setState(() {});
         },
         child: const Text('Call Method'),
@@ -330,13 +354,17 @@ class _MyHomePageState extends State<MyHomePage> {
       onPressed: () {
         setState(() {
           userData = DartTransactionManager.generateKeyPair();
+          if (kDebugMode) {
+            print("public key:${userData.publicKey}");
+            print("public key:${userData.privateKey}");
+          }
         });
       },
       child: const Text('Generate Keys'),
     );
   }
 
-  _buildNearSignInButtons() {
+  _buildFullLimitedAccessButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -351,7 +379,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         ElevatedButton(
           onPressed: () {
-            Wallet.requestLimitedAccess(userData);
+            var contractName = _textContractNameController.text.toString();
+            Wallet.requestLimitedAccess(userData, contractName);
             setState(() {
               userData.requestedFullAccess = false;
             });

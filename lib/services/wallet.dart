@@ -13,9 +13,9 @@ class Wallet {
   }
 
   //Connect wallet with limited access
-  static requestLimitedAccess(UserData userData) async {
+  static requestLimitedAccess(UserData userData, contractName) async {
     String url =
-        '${AppConstants.nearSignInUrl}&success_url=${AppConstants.nearSignInSuccessUrl}&failure_url=${AppConstants.nearSignInFailUrl}&contract_id=${AppConstants.appContractId}&public_key=ed25519:${userData.publicKey}';
+        '${AppConstants.nearSignInUrl}&success_url=${AppConstants.nearSignInSuccessUrl}&failure_url=${contractName}&contract_id=${contractName}&public_key=ed25519:${userData.publicKey}';
     await launchUrl(Uri.parse(url),
         mode: LaunchMode.externalNonBrowserApplication);
   }
