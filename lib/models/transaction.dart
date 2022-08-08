@@ -1,4 +1,5 @@
 class Transaction {
+  String? contractId;
   String? actionType;
   String? sender;
   String? publicKey;

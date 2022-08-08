@@ -1,14 +1,12 @@
 import 'dart:convert';
-import 'package:nearflutterconnector/app_constants.dart';
+import 'package:nearflutterconnector/utils/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:nearflutterconnector/models/transaction.dart';
-import 'package:nearflutterconnector/models/user_data.dart';
 
 class RpcApi {
-
   //getAccessKeys for nonce and block hash
-  static Future<Map<String, dynamic>> getAccessKey(UserData userData) async {
-    String url = AppConstants.nearRpcUrl;
+  static Future<Map<String, dynamic>> getAccessKey(Transaction transaction) async {
+    String url = Constants.nearRpcUrl;
 
     var body = json.encode({
       "jsonrpc": "2.0",
@@ -17,12 +15,12 @@ class RpcApi {
       "params": {
         "request_type": "view_access_key",
         "finality": "final",
-        "account_id": userData.accountId,
-        "public_key": "ed25519:${userData.publicKey}"
+        "account_id": transaction.sender,
+        "public_key": "ed25519:${transaction.publicKey}"
       }
     });
     Map<String, String> headers = {};
-    headers[AppConstants.contentType] = AppConstants.applicationJson;
+    headers[Constants.contentType] = Constants.applicationJson;
 
     http.Response responseData =
         await http.post(Uri.parse(url), headers: headers, body: body);
@@ -33,7 +31,7 @@ class RpcApi {
 
   //broadcastTransaction
   static Future<bool> broadcastTransaction(Transaction transaction) async {
-    String url = AppConstants.nearRpcUrl;
+    String url = Constants.nearRpcUrl;
 
     var body = json.encode({
       "jsonrpc": "2.0",
@@ -42,7 +40,7 @@ class RpcApi {
       "params": [transaction.hash]
     });
     Map<String, String> headers = {};
-    headers[AppConstants.contentType] = AppConstants.applicationJson;
+    headers[Constants.contentType] = Constants.applicationJson;
 
     http.Response responseData =
         await http.post(Uri.parse(url), headers: headers, body: body);

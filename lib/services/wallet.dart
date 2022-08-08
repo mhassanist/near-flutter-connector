@@ -1,21 +1,21 @@
-import 'package:nearflutterconnector/app_constants.dart';
-import 'package:nearflutterconnector/models/user_data.dart';
+import 'package:ed25519_edwards/ed25519_edwards.dart';
+import 'package:nearflutterconnector/utils/constants.dart';
+import 'package:nearflutterconnector/utils/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class Wallet {
-
   //Connect wallet with full access
-  static requestFullAccess(UserData userData) async {
+  static requestFullAccess(KeyPair? userKeyPair) async {
     String url =
-        '${AppConstants.nearSignInUrl}&success_url=${AppConstants.nearSignInSuccessUrl}&failure_url=${AppConstants.nearSignInFailUrl}&public_key=ed25519:${userData.publicKey}';
+        '${Constants.nearSignInUrl}&success_url=${Constants.nearSignInSuccessUrl}&failure_url=${Constants.nearSignInFailUrl}&public_key=ed25519:${Utils.getPublicKeyString(userKeyPair)}';
     await launchUrl(Uri.parse(url),
         mode: LaunchMode.externalNonBrowserApplication);
   }
 
   //Connect wallet with limited access
-  static requestLimitedAccess(UserData userData, contractName) async {
+  static requestLimitedAccess(KeyPair? userKeyPair, String? contractName) async {
     String url =
-        '${AppConstants.nearSignInUrl}&success_url=${AppConstants.nearSignInSuccessUrl}&failure_url=${contractName}&contract_id=${contractName}&public_key=ed25519:${userData.publicKey}';
+        '${Constants.nearSignInUrl}&success_url=${Constants.nearSignInSuccessUrl}&failure_url=${Constants.nearSignInFailUrl}&contract_id=$contractName&public_key=ed25519:${Utils.getPublicKeyString(userKeyPair)}';
     await launchUrl(Uri.parse(url),
         mode: LaunchMode.externalNonBrowserApplication);
   }

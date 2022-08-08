@@ -1,6 +1,7 @@
-class AppConstants {
+class Constants {
   static const String contentType = "Content-Type";
   static const String applicationJson = "application/json";
+  static const String networkId = "testnet";
   static const String nearRpcUrl = 'https://archival-rpc.testnet.near.org';
 
   static const String nearSignInUrl = 'https://wallet.testnet.near.org/login/?';
@@ -26,8 +27,4 @@ class AppConstants {
   static const String iosPackageName = 'com.example.nearConnector';
   static const bool isShortDunamicLink = false;
   static const String repoUrl = 'https://github.com/azmasamy/near_connector';
-  static const String amountToDonate = 'Enter NEAR amount to donate';
-  static String getArgumentsInputLabel(String methodName) {
-    return "Enter $methodName arguments";
-  }
 }

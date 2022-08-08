@@ -1,14 +1,15 @@
 import 'dart:convert';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:ed25519_edwards/ed25519_edwards.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:nearflutterconnector/app_constants.dart';
 import 'package:nearflutterconnector/services/local_transaction_api.dart';
 import 'package:nearflutterconnector/models/transaction.dart';
-import 'package:nearflutterconnector/models/user_data.dart';
+import 'package:nearflutterconnector/services/near_remote_rpc_api.dart';
+import 'package:nearflutterconnector/services/remote_transaction_serializer.dart';
 import 'package:nearflutterconnector/services/wallet.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:nearflutterconnector/utils/constants.dart';
+import 'package:nearflutterconnector/utils/utils.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,30 +42,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  UserData userData = UserData.initEmptyUserData();
+  KeyPair? keyPair;
+  bool requestedFullAccess = false;
   Transaction transaction = Transaction();
   String methodArgs = '{}';
-  FirebaseDynamicLinks dynamicLink = FirebaseDynamicLinks.instance;
-
-  var _textContractNameController = TextEditingController();
-  var _textAccountIdController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _setLoggedInUserId();
-  }
-
-  Future<void> _setLoggedInUserId() async {
-    dynamicLink.onLink.listen((dynamicLinkData) {
-      if (dynamicLinkData.link.path.contains('.')) {
-        setState(() {
-          userData.accountId = dynamicLinkData.link.path.replaceFirst('/', '');
-        });
-      }
-    }).onError((error) {
-      print(error.message);
-    });
   }
 
   @override
@@ -74,10 +59,9 @@ class _MyHomePageState extends State<MyHomePage> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            _buildKeysGenerationSection(),
-            _buildHorizontalSpace(),
             _buildEnterSmartContractName(),
             _buildHorizontalSpace(),
+            _buildKeysGenerationSection(),
             _buildHorizontalSpace(),
             _buildWalletAccessSection(),
             _buildHorizontalSpace(),
@@ -128,13 +112,15 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildWalletAccessSection() {
-    if (userData.publicKey.isNotEmpty) {
+    if (keyPair != null &&
+        transaction.contractId != null &&
+        transaction.contractId != '') {
       return Card(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
           child: Column(children: [
             _buildFullLimitedAccessButtons(),
-            _buildWelcomeAccountId(),
+            // _buildWelcomeAccountId(),
           ]),
         ),
       );
@@ -149,8 +135,8 @@ class _MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: Column(children: [
           _buildGenerateKeysButton(),
-          _buildCopyableText("Public Key", userData.publicKey),
-          _buildCopyableText("Private Key", userData.privateKey),
+          _buildCopyableText("Public Key", Utils.getPublicKeyString(keyPair)),
+          _buildCopyableText("Private Key", Utils.getPrivateKeyString(keyPair)),
         ]),
       ),
     );
@@ -176,7 +162,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildTransferStatus() {
-    if (transaction.actionType == 'transfer' && transaction.hash!.isNotEmpty) {
+    if (transaction.actionType != null &&
+        transaction.actionType == 'transfer' &&
+        transaction.hash != null &&
+        transaction.returnMessage != null) {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
@@ -190,8 +179,10 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildMethodCallStatus() {
-    if (transaction.actionType == 'function_call' &&
-        transaction.hash!.isNotEmpty) {
+    if (transaction.actionType != null &&
+        transaction.actionType == 'function_call' &&
+        transaction.hash != null &&
+        transaction.hash != null) {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
@@ -207,14 +198,15 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildEnterAccountId() {
     return Card(
       child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-          child: Column(
-            children: [
-              const Text("Enter Account Id"),
-              TextField(
-                controller: _textAccountIdController,
-              )
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          child: TextField(
+            onChanged: (value) {
+              setState(() {
+                transaction.sender = value;
+              });
+            },
+            decoration:
+                const InputDecoration(labelText: "Enter User Account ID"),
           )),
     );
   }
@@ -222,14 +214,14 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildEnterSmartContractName() {
     return Card(
       child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-          child: Column(
-            children: [
-              const Text("Enter Contract Name"),
-              TextField(
-                controller: _textContractNameController,
-              )
-            ],
+          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+          child: TextField(
+            onChanged: (value) {
+              setState(() {
+                transaction.contractId = value;
+              });
+            },
+            decoration: const InputDecoration(labelText: "Enter Contract ID"),
           )),
     );
   }
@@ -245,8 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         });
       },
-      decoration:
-          const InputDecoration(labelText: "Enter a contract method name"),
+      decoration: const InputDecoration(labelText: "Enter Contract Method"),
     );
   }
 
@@ -263,11 +254,10 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       },
       decoration: InputDecoration(
-          labelText:
-              AppConstants.getArgumentsInputLabel(transaction.methodName!)),
+          labelText: Utils.getArgumentsInputLabel(transaction.methodName)),
     );
     //} else {
-    return Container();
+    // return Container();
     //}
   }
 
@@ -282,7 +272,8 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         });
       },
-      decoration: const InputDecoration(labelText: AppConstants.amountToDonate),
+      decoration:
+          const InputDecoration(labelText: 'Enter NEAR amount to donate'),
       keyboardType: TextInputType.number,
       inputFormatters: <TextInputFormatter>[
         FilteringTextInputFormatter.digitsOnly
@@ -298,13 +289,13 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  _buildWelcomeAccountId() {
-    if (userData.accountId.isNotEmpty) {
-      return Text('Welcome ${userData.accountId}');
-    } else {
-      return Container();
-    }
-  }
+  // _buildWelcomeAccountId() {
+  //   if (userData.accountId != null) {
+  //     return Text('Welcome ${userData.accountId}');
+  //   } else {
+  //     return Container();
+  //   }
+  // }
 
   _buildHorizontalSpace() {
     return const SizedBox(
@@ -313,14 +304,19 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildSendNearButton() {
-    if (transaction.amount!.isNotEmpty && double.parse(transaction.amount!) > 0) {
+    if (transaction.amount != null &&
+        double.parse(transaction.amount!) > 0 &&
+        transaction.sender != null &&
+        transaction.sender != '' &&
+        keyPair != null) {
       return ElevatedButton(
         onPressed: () async {
-          transaction.actionType = 'transfer';
-          var contractName = _textContractNameController.text.toString();
+          setState(() {
+            transaction.actionType = 'transfer';
+            transaction.receiver = transaction.contractId;
+          });
 
-          transaction = await DartTransactionManager.sendTransaction(
-              userData, contractName);
+          await _sendTransaction();
           setState(() {});
         },
         child: const Text('Send Near'),
@@ -331,15 +327,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildCallMethodButton() {
-    if (transaction.methodName!.isNotEmpty) {
+    if (transaction.methodName != null &&
+        transaction.sender != null &&
+        keyPair != null) {
       return ElevatedButton(
         onPressed: () async {
           transaction.actionType = 'function_call';
           transaction.methodArgs = jsonDecode(methodArgs);
-          var contractName = _textContractNameController.text.toString();
-
-          transaction = await DartTransactionManager.sendTransaction(
-              userData, contractName);
+          await _sendTransaction();
           setState(() {});
         },
         child: const Text('Call Method'),
@@ -349,14 +344,35 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  _sendTransaction() async {
+    transaction.networkId = Constants.networkId;
+    var accessKey = await RpcApi.getAccessKey(transaction);
+    transaction.nonce = ++accessKey['nonce'];
+    transaction.blockHash = accessKey['block_hash'];
+    Map serializedTransaction =
+        await RemoteTransactionManage.serializeTransaction(transaction);
+    transaction.signature = DartTransactionManager.signTransaction(
+        keyPair!.privateKey, serializedTransaction);
+    transaction.hash =
+        await RemoteTransactionManage.serializeSignedTransaction(transaction);
+    if (transaction.hash!.isNotEmpty) {
+      bool transactionSucceeded =
+          await RpcApi.broadcastTransaction(transaction);
+      transactionSucceeded
+          ? transaction.returnMessage = Constants.transactionSuccessMessage
+          : transaction.returnMessage = Constants.transactionFailedMessage;
+    }
+  }
+
   _buildGenerateKeysButton() {
     return ElevatedButton(
       onPressed: () {
         setState(() {
-          userData = DartTransactionManager.generateKeyPair();
+          keyPair = DartTransactionManager.generateKeyPair();
+          transaction.publicKey = Utils.getPublicKeyString(keyPair);
           if (kDebugMode) {
-            print("public key:${userData.publicKey}");
-            print("public key:${userData.privateKey}");
+            print("public key:${Utils.getPublicKeyString(keyPair)}");
+            print("public key:${Utils.getPrivateKeyString(keyPair)}");
           }
         });
       },
@@ -370,19 +386,18 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         ElevatedButton(
           onPressed: () {
-            Wallet.requestFullAccess(userData);
+            Wallet.requestFullAccess(keyPair);
             setState(() {
-              userData.requestedFullAccess = true;
+              requestedFullAccess = true;
             });
           },
           child: const Text('Full Access'),
         ),
         ElevatedButton(
           onPressed: () {
-            var contractName = _textContractNameController.text.toString();
-            Wallet.requestLimitedAccess(userData, contractName);
+            Wallet.requestLimitedAccess(keyPair, transaction.contractId);
             setState(() {
-              userData.requestedFullAccess = false;
+              requestedFullAccess = false;
             });
           },
           child: const Text('Limited Access'),
