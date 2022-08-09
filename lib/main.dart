@@ -334,6 +334,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPressed: () async {
           transaction.actionType = 'function_call';
           transaction.methodArgs = jsonDecode(methodArgs);
+          transaction.receiver = transaction.contractId;
           await _sendTransaction();
           setState(() {});
         },
