@@ -2,7 +2,8 @@ import 'dart:typed_data';
 import 'package:nearflutterconnector/utils/utils.dart';
 import 'package:ed25519_edwards/ed25519_edwards.dart' as ed;
 
-class DartTransactionManager {
+/// The dart method for key generation and transaction signing
+class LocalTransactionAPI {
   //generateKeyPair using ed library
   static ed.KeyPair generateKeyPair() {
     return ed.generateKey();

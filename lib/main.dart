@@ -350,11 +350,11 @@ class _MyHomePageState extends State<MyHomePage> {
     transaction.nonce = ++accessKey['nonce'];
     transaction.blockHash = accessKey['block_hash'];
     Map serializedTransaction =
-        await RemoteTransactionManage.serializeTransaction(transaction);
-    transaction.signature = DartTransactionManager.signTransaction(
+        await RemoteTransactionSerializer.serializeTransaction(transaction);
+    transaction.signature = LocalTransactionAPI.signTransaction(
         keyPair!.privateKey, serializedTransaction);
     transaction.hash =
-        await RemoteTransactionManage.serializeSignedTransaction(transaction);
+        await RemoteTransactionSerializer.serializeSignedTransaction(transaction);
     if (transaction.hash!.isNotEmpty) {
       bool transactionSucceeded =
           await RpcApi.broadcastTransaction(transaction);
@@ -368,7 +368,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return ElevatedButton(
       onPressed: () {
         setState(() {
-          keyPair = DartTransactionManager.generateKeyPair();
+          keyPair = LocalTransactionAPI.generateKeyPair();
           transaction.publicKey = Utils.getPublicKeyString(keyPair);
           if (kDebugMode) {
             print("public key:${Utils.getPublicKeyString(keyPair)}");
