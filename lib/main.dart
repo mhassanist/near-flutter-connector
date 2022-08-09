@@ -112,21 +112,26 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildWalletAccessSection() {
-    if (keyPair != null &&
-        transaction.contractId != null &&
-        transaction.contractId != '') {
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-          child: Column(children: [
-            _buildFullLimitedAccessButtons(),
-            // _buildWelcomeAccountId(),
-          ]),
-        ),
-      );
-    } else {
-      return Container();
-    }
+    // if (keyPair != null &&
+    //     transaction.contractId != null &&
+    //     transaction.contractId != '') {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+        child: Column(children: [
+          _buildConnectToWalletTitle(),
+          _buildFullLimitedAccessButtons(),
+          // _buildWelcomeAccountId(),
+        ]),
+      ),
+    );
+    // } else {
+    //   return Container();
+    // }
+  }
+
+  _buildConnectToWalletTitle() {
+    return const Text('Connect Wallet');
   }
 
   _buildKeysGenerationSection() {
@@ -202,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: TextField(
             onChanged: (value) {
               setState(() {
-                transaction.sender = value;
+                transaction.sender = value.replaceAll(' ', '');
               });
             },
             decoration:
@@ -218,7 +223,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: TextField(
             onChanged: (value) {
               setState(() {
-                transaction.contractId = value;
+                transaction.contractId = value.replaceAll(' ', '');
               });
             },
             decoration: const InputDecoration(labelText: "Enter Contract ID"),
@@ -231,7 +236,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onChanged: (value) {
         setState(() {
           if (value.isNotEmpty) {
-            transaction.methodName = value;
+            transaction.methodName = value.replaceAll(' ', '');
           } else {
             transaction.methodName = '';
           }
@@ -247,7 +252,7 @@ class _MyHomePageState extends State<MyHomePage> {
       onChanged: (value) {
         setState(() {
           if (value.isNotEmpty) {
-            methodArgs = value;
+            methodArgs = value.replaceAll(' ', '');
           } else {
             methodArgs = '{}';
           }
@@ -304,45 +309,62 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildSendNearButton() {
-    if (transaction.amount != null &&
-        double.parse(transaction.amount!) > 0 &&
-        transaction.sender != null &&
-        transaction.sender != '' &&
-        keyPair != null) {
-      return ElevatedButton(
-        onPressed: () async {
-          setState(() {
-            transaction.actionType = 'transfer';
-            transaction.receiver = transaction.contractId;
-          });
-
+    // if (transaction.amount != null &&
+    //     double.parse(transaction.amount!) > 0 &&
+    //     transaction.sender != null &&
+    //     transaction.sender != '' &&
+    //     keyPair != null) {
+    return ElevatedButton(
+      onPressed: () async {
+        if (transaction.amount != null &&
+            double.parse(transaction.amount!) > 0 &&
+            transaction.sender != null &&
+            transaction.sender != '' &&
+            keyPair != null) {
+          transaction.hash = null;
+          transaction.actionType = 'transfer';
+          transaction.receiver = transaction.contractId;
+          setState(() {});
           await _sendTransaction();
           setState(() {});
-        },
-        child: const Text('Send Near'),
-      );
-    } else {
-      return Container();
-    }
+        } else {
+          _buildSendNearSnackBar();
+        }
+      },
+      child: const Text('Send Near'),
+    );
+    // } else {
+    //   return Container();
+    // }
   }
 
   _buildCallMethodButton() {
-    if (transaction.methodName != null &&
-        transaction.sender != null &&
-        keyPair != null) {
-      return ElevatedButton(
-        onPressed: () async {
+    // if (transaction.methodName != null &&
+    //     transaction.sender != null &&
+    //     keyPair != null) {
+    return ElevatedButton(
+      onPressed: () async {
+        if (transaction.methodName != null &&
+            transaction.methodName != '' &&
+            transaction.sender != null &&
+            transaction.sender != '' &&
+            keyPair != null) {
+          transaction.hash = null;
           transaction.actionType = 'function_call';
           transaction.methodArgs = jsonDecode(methodArgs);
           transaction.receiver = transaction.contractId;
+          setState(() {});
           await _sendTransaction();
           setState(() {});
-        },
-        child: const Text('Call Method'),
-      );
-    } else {
-      return Container();
-    }
+        } else {
+          _buildCallMethodSnackBar();
+        }
+      },
+      child: const Text('Call Method'),
+    );
+    // } else {
+    //   return Container();
+    // }
   }
 
   _sendTransaction() async {
@@ -381,27 +403,75 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  _buildWalletConnectionSnackBar() {
+    final snackBar = SnackBar(
+      content:
+          const Text('Please Generate Keys and enter the Contract ID first'),
+      action: SnackBarAction(
+        label: 'Close',
+        onPressed: () {},
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  _buildSendNearSnackBar() {
+    final snackBar = SnackBar(
+      content: const Text(
+          'Please make sure you connect your wallet with full access then enter User ID, and Near Ammount first'),
+      action: SnackBarAction(
+        label: 'Close',
+        onPressed: () {},
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  _buildCallMethodSnackBar() {
+    final snackBar = SnackBar(
+      content: const Text(
+          'Please make sure you connect your wallet then enter User ID, Method Name, and Method Arguments first'),
+      action: SnackBarAction(
+        label: 'Close',
+        onPressed: () {},
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
   _buildFullLimitedAccessButtons() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ElevatedButton(
           onPressed: () {
-            Wallet.requestFullAccess(keyPair);
-            setState(() {
-              requestedFullAccess = true;
-            });
+            if (keyPair != null &&
+                transaction.contractId != null &&
+                transaction.contractId != '') {
+              Wallet.requestFullAccess(keyPair);
+              setState(() {
+                requestedFullAccess = true;
+              });
+            } else {
+              _buildWalletConnectionSnackBar();
+            }
           },
           child: const Text('Full Access'),
         ),
         ElevatedButton(
           onPressed: () {
-            Wallet.requestLimitedAccess(keyPair, transaction.contractId);
-            setState(() {
-              requestedFullAccess = false;
-            });
+            if (keyPair != null &&
+                transaction.contractId != null &&
+                transaction.contractId != '') {
+              Wallet.requestFunctionCallAccess(keyPair, transaction.contractId);
+              setState(() {
+                requestedFullAccess = false;
+              });
+            } else {
+              _buildWalletConnectionSnackBar();
+            }
           },
-          child: const Text('Limited Access'),
+          child: const Text('Function-call Access'),
         ),
       ],
     );

@@ -39,6 +39,6 @@ class Utils {
     if (methodName != null) {
       return "Enter $methodName arguments";
     }
-    return "";
+    return "Enter Method Arguments";
   }
 }

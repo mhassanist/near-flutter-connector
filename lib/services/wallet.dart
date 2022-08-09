@@ -13,7 +13,8 @@ class Wallet {
   }
 
   //Connect wallet with limited access
-  static requestLimitedAccess(KeyPair? userKeyPair, String? contractName) async {
+  static requestFunctionCallAccess(
+      KeyPair? userKeyPair, String? contractName) async {
     String url =
         '${Constants.nearSignInUrl}&success_url=${Constants.nearSignInSuccessUrl}&failure_url=${Constants.nearSignInFailUrl}&contract_id=$contractName&public_key=ed25519:${Utils.getPublicKeyString(userKeyPair)}';
     await launchUrl(Uri.parse(url),
