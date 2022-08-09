@@ -292,7 +292,9 @@ class _MyHomePageState extends State<MyHomePage> {
     //     keyPair != null) {
     return ElevatedButton(
       onPressed: () async {
-        if (transaction.amount != null &&
+        if (transaction.contractId != null &&
+            transaction.contractId != '' &&
+            transaction.amount != null &&
             double.parse(transaction.amount!) > 0 &&
             transaction.sender != null &&
             transaction.sender != '' &&
@@ -320,7 +322,9 @@ class _MyHomePageState extends State<MyHomePage> {
     //     keyPair != null) {
     return ElevatedButton(
       onPressed: () async {
-        if (transaction.methodName != null &&
+        if (transaction.contractId != null &&
+            transaction.contractId != '' &&
+            transaction.methodName != null &&
             transaction.methodName != '' &&
             transaction.sender != null &&
             transaction.sender != '' &&
@@ -389,10 +393,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   _buildWalletConnectionSnackBar() {
     final snackBar = SnackBar(
-      content:
-          const Text('Please Generate Keys and enter the Contract ID first'),
+      content: const Text(
+          'Please Generate Keys and enter the Contract ID first',
+          style: TextStyle(color: Colors.black)),
+      backgroundColor: Colors.redAccent,
       action: SnackBarAction(
         label: 'Close',
+        textColor: Colors.white,
         onPressed: () {},
       ),
     );
@@ -402,9 +409,12 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildSendNearSnackBar() {
     final snackBar = SnackBar(
       content: const Text(
-          'Please make sure you connect your wallet with full access then enter User ID, and Near Ammount first'),
+          'Please make sure you connect your wallet with full access then enter User ID, and Near Ammount first',
+          style: TextStyle(color: Colors.black)),
+      backgroundColor: Colors.redAccent,
       action: SnackBarAction(
         label: 'Close',
+        textColor: Colors.white,
         onPressed: () {},
       ),
     );
@@ -414,9 +424,12 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildCallMethodSnackBar() {
     final snackBar = SnackBar(
       content: const Text(
-          'Please make sure you connect your wallet then enter User ID, Method Name, and Method Arguments first'),
+          'Please make sure you connect your wallet then enter User ID, Method Name, and Method Arguments first',
+          style: TextStyle(color: Colors.black)),
+      backgroundColor: Colors.redAccent,
       action: SnackBarAction(
         label: 'Close',
+        textColor: Colors.white,
         onPressed: () {},
       ),
     );
