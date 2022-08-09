@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'package:nearflutterconnector/models/transaction.dart';
 
 class RpcApi {
-  //getAccessKeys for nonce and block hash
+  //call near RPC API's  getAccessKeys for nonce and block hash
   static Future<Map<String, dynamic>> getAccessKey(Transaction transaction) async {
-    String url = Constants.nearRpcUrl;
+    String url = Constants.nearRPCUrl;
 
     var body = json.encode({
       "jsonrpc": "2.0",
@@ -31,7 +31,7 @@ class RpcApi {
 
   //broadcastTransaction
   static Future<bool> broadcastTransaction(Transaction transaction) async {
-    String url = Constants.nearRpcUrl;
+    String url = Constants.nearRPCUrl;
 
     var body = json.encode({
       "jsonrpc": "2.0",

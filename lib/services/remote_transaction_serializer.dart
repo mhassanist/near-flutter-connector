@@ -3,7 +3,9 @@ import 'package:nearflutterconnector/utils/constants.dart';
 import 'package:nearflutterconnector/models/transaction.dart';
 import 'package:http/http.dart' as http;
 
-class RemoteTransactionManage {
+/// self-hosted online server that uses near-api-js to serialize transactions
+/// we shall import this functionality to dart later
+class RemoteTransactionSerializer {
   //serializeTransaction
   static Future<Map> serializeTransaction(Transaction transaction) async {
     var body = jsonEncode(transaction.toJson());

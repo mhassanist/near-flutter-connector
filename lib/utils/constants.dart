@@ -2,7 +2,7 @@ class Constants {
   static const String contentType = "Content-Type";
   static const String applicationJson = "application/json";
   static const String networkId = "testnet";
-  static const String nearRpcUrl = 'https://archival-rpc.testnet.near.org';
+  static const String nearRPCUrl = 'https://archival-rpc.testnet.near.org';
 
   static const String nearSignInUrl = 'https://wallet.testnet.near.org/login/?';
   static const String localServer = 'http://10.0.2.2:8080';
