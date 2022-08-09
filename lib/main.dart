@@ -333,6 +333,8 @@ class _MyHomePageState extends State<MyHomePage> {
       return ElevatedButton(
         onPressed: () async {
           transaction.actionType = 'function_call';
+          transaction.receiver = transaction.contractId;
+
           transaction.methodArgs = jsonDecode(methodArgs);
           await _sendTransaction();
           setState(() {});
@@ -351,17 +353,22 @@ class _MyHomePageState extends State<MyHomePage> {
     transaction.blockHash = accessKey['block_hash'];
     Map serializedTransaction =
         await RemoteTransactionSerializer.serializeTransaction(transaction);
-    transaction.signature = LocalTransactionAPI.signTransaction(
-        keyPair!.privateKey, serializedTransaction);
-    transaction.hash =
-        await RemoteTransactionSerializer.serializeSignedTransaction(transaction);
-    if (transaction.hash!.isNotEmpty) {
-      bool transactionSucceeded =
-          await RpcApi.broadcastTransaction(transaction);
-      transactionSucceeded
-          ? transaction.returnMessage = Constants.transactionSuccessMessage
-          : transaction.returnMessage = Constants.transactionFailedMessage;
+    try{
+      transaction.signature = LocalTransactionAPI.signTransaction(
+          keyPair!.privateKey, serializedTransaction);
+      transaction.hash =
+      await RemoteTransactionSerializer.serializeSignedTransaction(transaction);
+      if (transaction.hash!.isNotEmpty) {
+        bool transactionSucceeded =
+        await RpcApi.broadcastTransaction(transaction);
+        transactionSucceeded
+            ? transaction.returnMessage = Constants.transactionSuccessMessage
+            : transaction.returnMessage = Constants.transactionFailedMessage;
+      }
+    } catch(exp){
+      print("EXCEPTION: $exp" + serializedTransaction['code']!=null ? serializedTransaction['code'] : "");
     }
+
   }
 
   _buildGenerateKeysButton() {
