@@ -1,10 +1,15 @@
+import 'package:borsh_annotation/borsh_annotation.dart';
+import 'package:bs58/bs58.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:ed25519_edwards/ed25519_edwards.dart';
 import 'package:flutter/services.dart';
-import 'package:nearflutterconnector/services/local_transaction_api.dart';
+import 'package:nearflutterconnector/models/action.dart' as tx_action;
+import 'package:nearflutterconnector/models/public_key.dart' as tx_public_key;
 import 'package:nearflutterconnector/models/transaction.dart';
+import 'package:nearflutterconnector/services/local_transaction_api.dart';
+import 'package:nearflutterconnector/models/my_transaction.dart';
 import 'package:nearflutterconnector/services/near_remote_rpc_api.dart';
 import 'package:nearflutterconnector/services/remote_transaction_serializer.dart';
 import 'package:nearflutterconnector/services/wallet.dart';
@@ -20,7 +25,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   KeyPair? keyPair;
   bool requestedFullAccess = false;
-  Transaction transaction = Transaction();
+  MyTransaction transaction = MyTransaction();
   String methodArgs = '{}';
 
   @override
@@ -354,6 +359,7 @@ class _MyHomePageState extends State<MyHomePage> {
     transaction.blockHash = accessKey['block_hash'];
     Map serializedTransaction =
         await RemoteTransactionSerializer.serializeTransaction(transaction);
+    Uint8List localTransactionSerialization = serializeTransaction(transaction);
     try {
       transaction.signature = LocalTransactionAPI.signTransaction(
           keyPair!.privateKey, serializedTransaction);
@@ -389,6 +395,23 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       child: const Text('Generate Keys'),
     );
+  }
+
+  Uint8List serializeTransaction(MyTransaction myTransaction) {
+    final transaction = Transaction(
+        actions: [
+          tx_action.Action(
+              enun: 'transfer',
+              transfer: tx_action.Transfer(deposit: BigInt.from(1)))
+        ],
+        blockHash: base58.decode(myTransaction.blockHash as String),
+        nonce: BigInt.from(myTransaction.nonce as int),
+        publicKey: tx_public_key.PublicKey(
+            data: base58.decode(myTransaction.publicKey as String), keyType: 0),
+        receiverId: 'friendbook.hamzatest.testnet',
+        signerId: 'hamzatest.testnet');
+    final serializedStruct = transaction.toBorsh();
+    return serializedStruct;
   }
 
   _buildWalletConnectionSnackBar() {

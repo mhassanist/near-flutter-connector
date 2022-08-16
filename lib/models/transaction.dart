@@ -1,30 +1,22 @@
-class Transaction {
-  String? contractId;
-  String? actionType;
-  String? sender;
-  String? publicKey;
-  String? amount;
-  String? receiver;
-  String? networkId;
-  String? blockHash;
-  int? nonce;
-  Map? signature;
-  String? hash;
-  String? returnMessage;
-  String? methodName;
-  Map<String, dynamic>? methodArgs;
+import 'dart:ffi';
 
-  Map<String, dynamic> toJson() => {
-        "action_type": actionType,
-        "sender": sender,
-        "public_key": publicKey,
-        "amount": amount,
-        "receiver": receiver,
-        "network_id": networkId,
-        'block_hash': blockHash,
-        'nonce': nonce,
-        'method_name': methodName,
-        'method_args': methodArgs,
-        "signature": signature
-      };
+import 'package:borsh_annotation/borsh_annotation.dart';
+import 'package:nearflutterconnector/models/action.dart';
+import 'package:nearflutterconnector/models/public_key.dart';
+part 'transaction.g.dart';
+
+@BorshSerializable()
+class Transaction with _$Transaction {
+  factory Transaction({
+    @BString() required String signerId,
+    @BPublicKey() required PublicKey publicKey,
+    @BU64() required BigInt nonce,
+    @BString() required String receiverId,
+    @BFixedArray(32, BU8()) required List<int> blockHash,
+    @BArray(BAction()) required List<Action> actions,
+  }) = _Transaction;
+
+  Transaction._();
+
+  factory Transaction.fromBorsh(Uint8List data) => _$TransactionFromBorsh(data);
 }
