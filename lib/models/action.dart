@@ -4,7 +4,7 @@ part 'action.g.dart';
 @BorshSerializable()
 class Transfer with _$Transfer {
   factory Transfer({
-    @BU64() required BigInt deposit,
+    @BFixedArray(16, BU8()) required List<int> deposit,
   }) = _Transfer;
 
   Transfer._();
@@ -15,7 +15,15 @@ class Transfer with _$Transfer {
 @BorshSerializable()
 class Action with _$Action {
   factory Action({
-    @BString() required String enun,
+    @BU8() required int type,
+    // 0: CreateAccount;
+    // 1: DeployContract;
+    // 2: FunctionCall;
+    // 3: Transfer;
+    // 4: Stake;
+    // 5: AddKey;
+    // 6: DeleteKey;
+    // 7: DeleteAccount;
     @BTransfer() required Transfer transfer,
   }) = _Action;
 

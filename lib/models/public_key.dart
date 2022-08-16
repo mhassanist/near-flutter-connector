@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:borsh_annotation/borsh_annotation.dart';
 part 'public_key.g.dart';
 

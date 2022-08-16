@@ -1,5 +1,3 @@
-import 'dart:ffi';
-
 import 'package:borsh_annotation/borsh_annotation.dart';
 import 'package:nearflutterconnector/models/action.dart';
 import 'package:nearflutterconnector/models/public_key.dart';
