@@ -31,7 +31,7 @@ class RpcApi {
   }
 
   //broadcastTransaction
-  static Future<bool> broadcastTransaction(MyTransaction transaction) async {
+  static Future<bool>broadcastTransaction(MyTransaction transaction) async {
     String url = Constants.nearRPCUrl;
 
     var body = json.encode({

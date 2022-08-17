@@ -8,7 +8,7 @@ class Constants {
   static const String localServer = 'http://10.0.2.2:8080';
   static const String globalServer =
       'https://near-transaction-serializer.herokuapp.com';
-  static const String currentServer = localServer;
+  static const String currentServer = globalServer;
   static const String nearSerializeTransactionUrl =
       '$currentServer/serializeTransaction';
   static const String nearSerializeSignedTransactionUrl =
@@ -27,4 +27,5 @@ class Constants {
   static const String iosPackageName = 'com.example.nearConnector';
   static const bool isShortDunamicLink = false;
   static const String repoUrl = 'https://github.com/azmasamy/near_connector';
+  static const int defaultGas = 30000000000000;
 }

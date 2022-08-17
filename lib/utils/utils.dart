@@ -37,14 +37,14 @@ class Utils {
 
   static String getArgumentsInputLabel(String? methodName) {
     if (methodName != null) {
-      return "Enter $methodName arguments";
+      return "$methodName arguments";
     }
-    return "Enter Method Arguments";
+    return "Method Arguments";
   }
 
   static Uint8List decodeNearDeposit(String amount) {
-    String nearString = (100000000.0 * double.parse(amount)).toInt().toString();
-    BigInt nearBigNumber = BigInt.parse("${nearString}0000000000000000");
+    double nearAmount = 1000000000000.0 * double.parse(amount);
+    BigInt nearBigNumber = BigInt.parse("${nearAmount.toStringAsFixed(0)}000000000000");
     String nearBinary = nearBigNumber.toRadixString(2);
     String nearU128Binary = nearBinary.padLeft(128, '0');
     List near8BitList = [];
