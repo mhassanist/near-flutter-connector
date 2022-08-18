@@ -6,13 +6,13 @@ part of 'transaction.dart';
 // BorshSerializableGenerator
 // **************************************************************************
 
-mixin _$Transaction {
+mixin _$TransferTransaction {
   String get signerId => throw UnimplementedError();
   PublicKey get publicKey => throw UnimplementedError();
   BigInt get nonce => throw UnimplementedError();
   String get receiverId => throw UnimplementedError();
   List<int> get blockHash => throw UnimplementedError();
-  List<Action> get actions => throw UnimplementedError();
+  List<TransferAction> get transferActions => throw UnimplementedError();
 
   Uint8List toBorsh() {
     final writer = BinaryWriter();
@@ -22,20 +22,20 @@ mixin _$Transaction {
     const BU64().write(writer, nonce);
     const BString().write(writer, receiverId);
     const BFixedArray(32, BU8()).write(writer, blockHash);
-    const BArray(BAction()).write(writer, actions);
+    const BArray(BTransferAction()).write(writer, transferActions);
 
     return writer.toArray();
   }
 }
 
-class _Transaction extends Transaction {
-  _Transaction({
+class _TransferTransaction extends TransferTransaction {
+  _TransferTransaction({
     required this.signerId,
     required this.publicKey,
     required this.nonce,
     required this.receiverId,
     required this.blockHash,
-    required this.actions,
+    required this.transferActions,
   }) : super._();
 
   final String signerId;
@@ -43,32 +43,100 @@ class _Transaction extends Transaction {
   final BigInt nonce;
   final String receiverId;
   final List<int> blockHash;
-  final List<Action> actions;
+  final List<TransferAction> transferActions;
 }
 
-class BTransaction implements BType<Transaction> {
-  const BTransaction();
+class BTransferTransaction implements BType<TransferTransaction> {
+  const BTransferTransaction();
 
   @override
-  void write(BinaryWriter writer, Transaction value) {
+  void write(BinaryWriter writer, TransferTransaction value) {
     writer.writeStruct(value.toBorsh());
   }
 
   @override
-  Transaction read(BinaryReader reader) {
-    return Transaction(
+  TransferTransaction read(BinaryReader reader) {
+    return TransferTransaction(
       signerId: const BString().read(reader),
       publicKey: const BPublicKey().read(reader),
       nonce: const BU64().read(reader),
       receiverId: const BString().read(reader),
       blockHash: const BFixedArray(32, BU8()).read(reader),
-      actions: const BArray(BAction()).read(reader),
+      transferActions: const BArray(BTransferAction()).read(reader),
     );
   }
 }
 
-Transaction _$TransactionFromBorsh(Uint8List data) {
+TransferTransaction _$TransferTransactionFromBorsh(Uint8List data) {
   final reader = BinaryReader(data.buffer.asByteData());
 
-  return const BTransaction().read(reader);
+  return const BTransferTransaction().read(reader);
+}
+
+mixin _$FunctionCallTransaction {
+  String get signerId => throw UnimplementedError();
+  PublicKey get publicKey => throw UnimplementedError();
+  BigInt get nonce => throw UnimplementedError();
+  String get receiverId => throw UnimplementedError();
+  List<int> get blockHash => throw UnimplementedError();
+  List<FunctionCallAction> get functionCallActions =>
+      throw UnimplementedError();
+
+  Uint8List toBorsh() {
+    final writer = BinaryWriter();
+
+    const BString().write(writer, signerId);
+    const BPublicKey().write(writer, publicKey);
+    const BU64().write(writer, nonce);
+    const BString().write(writer, receiverId);
+    const BFixedArray(32, BU8()).write(writer, blockHash);
+    const BArray(BFunctionCallAction()).write(writer, functionCallActions);
+
+    return writer.toArray();
+  }
+}
+
+class _FunctionCallTransaction extends FunctionCallTransaction {
+  _FunctionCallTransaction({
+    required this.signerId,
+    required this.publicKey,
+    required this.nonce,
+    required this.receiverId,
+    required this.blockHash,
+    required this.functionCallActions,
+  }) : super._();
+
+  final String signerId;
+  final PublicKey publicKey;
+  final BigInt nonce;
+  final String receiverId;
+  final List<int> blockHash;
+  final List<FunctionCallAction> functionCallActions;
+}
+
+class BFunctionCallTransaction implements BType<FunctionCallTransaction> {
+  const BFunctionCallTransaction();
+
+  @override
+  void write(BinaryWriter writer, FunctionCallTransaction value) {
+    writer.writeStruct(value.toBorsh());
+  }
+
+  @override
+  FunctionCallTransaction read(BinaryReader reader) {
+    return FunctionCallTransaction(
+      signerId: const BString().read(reader),
+      publicKey: const BPublicKey().read(reader),
+      nonce: const BU64().read(reader),
+      receiverId: const BString().read(reader),
+      blockHash: const BFixedArray(32, BU8()).read(reader),
+      functionCallActions: const BArray(BFunctionCallAction()).read(reader),
+    );
+  }
+}
+
+FunctionCallTransaction _$FunctionCallTransactionFromBorsh(Uint8List data) {
+  final reader = BinaryReader(data.buffer.asByteData());
+
+  return const BFunctionCallTransaction().read(reader);
 }

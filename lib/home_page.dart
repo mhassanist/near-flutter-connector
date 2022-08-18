@@ -1,13 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:borsh_annotation/borsh_annotation.dart';
-import 'package:bs58/bs58.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:ed25519_edwards/ed25519_edwards.dart';
 import 'package:flutter/services.dart';
-import 'package:nearflutterconnector/models/action.dart' as tx_action;
-import 'package:nearflutterconnector/models/public_key.dart' as tx_public_key;
-import 'package:nearflutterconnector/models/transaction.dart';
 import 'package:nearflutterconnector/services/local_transaction_api.dart';
 import 'package:nearflutterconnector/models/my_transaction.dart';
 import 'package:nearflutterconnector/services/near_remote_rpc_api.dart';
@@ -26,7 +25,6 @@ class _MyHomePageState extends State<MyHomePage> {
   KeyPair? keyPair;
   bool requestedFullAccess = false;
   MyTransaction transaction = MyTransaction();
-  String methodArgs = '{}';
 
   @override
   void initState() {
@@ -57,8 +55,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildMethodCallSection() {
-    //if (userData.accountId.isNotEmpty &&
-    //    userData.requestedFullAccess == false) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -70,13 +66,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ]),
       ),
     );
-    // } else {
-    //   return Container();
-    // }
   }
 
   _buildTransferSection() {
-    //if (userData.accountId.isNotEmpty && userData.requestedFullAccess) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -87,28 +79,18 @@ class _MyHomePageState extends State<MyHomePage> {
         ]),
       ),
     );
-    //  } else {
-    //  return Container();
-    //}
   }
 
   _buildWalletAccessSection() {
-    // if (keyPair != null &&
-    //     transaction.contractId != null &&
-    //     transaction.contractId != '') {
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
         child: Column(children: [
           _buildConnectToWalletTitle(),
           _buildFullLimitedAccessButtons(),
-          // _buildWelcomeAccountId(),
         ]),
       ),
     );
-    // } else {
-    //   return Container();
-    // }
   }
 
   _buildConnectToWalletTitle() {
@@ -191,8 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 transaction.sender = value.replaceAll(' ', '');
               });
             },
-            decoration:
-                const InputDecoration(labelText: "Enter User Account ID"),
+            decoration: const InputDecoration(labelText: "User Account ID"),
           )),
     );
   }
@@ -207,7 +188,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 transaction.contractId = value.replaceAll(' ', '');
               });
             },
-            decoration: const InputDecoration(labelText: "Enter Contract ID"),
+            decoration: const InputDecoration(labelText: "Contract ID"),
           )),
     );
   }
@@ -223,28 +204,24 @@ class _MyHomePageState extends State<MyHomePage> {
           }
         });
       },
-      decoration: const InputDecoration(labelText: "Enter Contract Method"),
+      decoration: const InputDecoration(labelText: "Contract Method Name"),
     );
   }
 
   _buildMethodArgsInput() {
-    //if (userData.accountId.isNotEmpty && transaction.methodName.isNotEmpty) {
     return TextField(
       onChanged: (value) {
         setState(() {
           if (value.isNotEmpty) {
-            methodArgs = value.replaceAll(' ', '');
+            transaction.methodArgsString = value.replaceAll(' ', '');
           } else {
-            methodArgs = '{}';
+            transaction.methodArgsString = '{}';
           }
         });
       },
       decoration: InputDecoration(
           labelText: Utils.getArgumentsInputLabel(transaction.methodName)),
     );
-    //} else {
-    // return Container();
-    //}
   }
 
   _buildTransferNearInput() {
@@ -252,18 +229,20 @@ class _MyHomePageState extends State<MyHomePage> {
       onChanged: (value) {
         setState(() {
           if (value.isNotEmpty) {
-            transaction.amount = value;
+            transaction.amount = value
+                .replaceAll(" ", "")
+                .replaceAll("-", "")
+                .replaceAll(",", "");
           } else {
             transaction.amount = '0';
           }
         });
       },
-      decoration:
-          const InputDecoration(labelText: 'Enter NEAR amount to donate'),
+      decoration: const InputDecoration(labelText: 'NEAR amount to transfer'),
       keyboardType: TextInputType.number,
-      inputFormatters: <TextInputFormatter>[
-        FilteringTextInputFormatter.digitsOnly
-      ],
+      // inputFormatters: <TextInputFormatter>[
+      //   FilteringTextInputFormatter.digitsOnly
+      // ],
     );
   }
 
@@ -275,14 +254,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  // _buildWelcomeAccountId() {
-  //   if (userData.accountId != null) {
-  //     return Text('Welcome ${userData.accountId}');
-  //   } else {
-  //     return Container();
-  //   }
-  // }
-
   _buildHorizontalSpace() {
     return const SizedBox(
       height: 2,
@@ -290,11 +261,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   _buildSendNearButton() {
-    // if (transaction.amount != null &&
-    //     double.parse(transaction.amount!) > 0 &&
-    //     transaction.sender != null &&
-    //     transaction.sender != '' &&
-    //     keyPair != null) {
     return ElevatedButton(
       onPressed: () async {
         if (transaction.contractId != null &&
@@ -316,15 +282,9 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       child: const Text('Send Near'),
     );
-    // } else {
-    //   return Container();
-    // }
   }
 
   _buildCallMethodButton() {
-    // if (transaction.methodName != null &&
-    //     transaction.sender != null &&
-    //     keyPair != null) {
     return ElevatedButton(
       onPressed: () async {
         if (transaction.contractId != null &&
@@ -336,7 +296,8 @@ class _MyHomePageState extends State<MyHomePage> {
             keyPair != null) {
           transaction.hash = null;
           transaction.actionType = 'function_call';
-          transaction.methodArgs = jsonDecode(methodArgs);
+          transaction.methodArgs =
+              jsonDecode(transaction.methodArgsString as String);
           transaction.receiver = transaction.contractId;
           setState(() {});
           await _sendTransaction();
@@ -347,9 +308,6 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       child: const Text('Call Method'),
     );
-    // } else {
-    //   return Container();
-    // }
   }
 
   _sendTransaction() async {
@@ -357,12 +315,17 @@ class _MyHomePageState extends State<MyHomePage> {
     var accessKey = await RpcApi.getAccessKey(transaction);
     transaction.nonce = ++accessKey['nonce'];
     transaction.blockHash = accessKey['block_hash'];
-    Map serializedTransaction =
-        await RemoteTransactionSerializer.serializeTransaction(transaction);
-    Uint8List localTransactionSerialization = serializeTransaction(transaction);
+    // Map remoteSerializedTransaction =
+    //     await RemoteTransactionSerializer.serializeTransaction(transaction);
+    // Uint8List remoteHashedSerializedTx =
+    //     Utils.listFromMap(remoteSerializedTransaction);
+    Uint8List serializedTransaction =
+        LocalTransactionAPI.serializeTransaction(transaction);
+    Uint8List hashedSerializedTx =
+        Uint8List.fromList(sha256.convert(serializedTransaction).bytes);
     try {
       transaction.signature = LocalTransactionAPI.signTransaction(
-          keyPair!.privateKey, serializedTransaction);
+          keyPair!.privateKey, hashedSerializedTx);
       transaction.hash =
           await RemoteTransactionSerializer.serializeSignedTransaction(
               transaction);
@@ -375,8 +338,7 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     } catch (exp) {
       if (kDebugMode) {
-        String errorCode = serializedTransaction['code'] ?? "";
-        print("EXCEPTION: $exp $errorCode");
+        print("EXCEPTION: $exp");
       }
     }
   }
@@ -395,23 +357,6 @@ class _MyHomePageState extends State<MyHomePage> {
       },
       child: const Text('Generate Keys'),
     );
-  }
-
-  Uint8List serializeTransaction(MyTransaction myTransaction) {
-    final transaction = Transaction(
-        actions: [
-          tx_action.Action(
-              enun: 'transfer',
-              transfer: tx_action.Transfer(deposit: BigInt.from(1)))
-        ],
-        blockHash: base58.decode(myTransaction.blockHash as String),
-        nonce: BigInt.from(myTransaction.nonce as int),
-        publicKey: tx_public_key.PublicKey(
-            data: base58.decode(myTransaction.publicKey as String), keyType: 0),
-        receiverId: 'friendbook.hamzatest.testnet',
-        signerId: 'hamzatest.testnet');
-    final serializedStruct = transaction.toBorsh();
-    return serializedStruct;
   }
 
   _buildWalletConnectionSnackBar() {

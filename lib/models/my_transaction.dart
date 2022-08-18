@@ -12,6 +12,7 @@ class MyTransaction {
   String? hash;
   String? returnMessage;
   String? methodName;
+  String? methodArgsString = '{}';
   Map<String, dynamic>? methodArgs;
 
   Map<String, dynamic> toJson() => {

@@ -4,7 +4,7 @@ part 'action.g.dart';
 @BorshSerializable()
 class Transfer with _$Transfer {
   factory Transfer({
-    @BU64() required BigInt deposit,
+    @BFixedArray(16, BU8()) required List<int> deposit,
   }) = _Transfer;
 
   Transfer._();
@@ -13,13 +13,58 @@ class Transfer with _$Transfer {
 }
 
 @BorshSerializable()
-class Action with _$Action {
-  factory Action({
-    @BString() required String enun,
+class FunctionCall with _$FunctionCall {
+  factory FunctionCall({
+    @BString() required String methodName,
+    @BString() required String args,
+    @BU64() required BigInt gas,
+    @BFixedArray(16, BU8()) required List<int> deposit,
+  }) = _FunctionCall;
+
+  FunctionCall._();
+
+  factory FunctionCall.fromBorsh(Uint8List data) =>
+      _$FunctionCallFromBorsh(data);
+}
+
+@BorshSerializable()
+class TransferAction with _$TransferAction {
+  factory TransferAction({
+    @BU8() required int eNum,
+    // 0: CreateAccount;
+    // 1: DeployContract;
+    // 2: FunctionCall;
+    // 3: Transfer;
+    // 4: Stake;
+    // 5: AddKey;
+    // 6: DeleteKey;
+    // 7: DeleteAccount;
     @BTransfer() required Transfer transfer,
-  }) = _Action;
+  }) = _TransferAction;
 
-  Action._();
+  TransferAction._();
 
-  factory Action.fromBorsh(Uint8List data) => _$ActionFromBorsh(data);
+  factory TransferAction.fromBorsh(Uint8List data) =>
+      _$TransferActionFromBorsh(data);
+}
+
+@BorshSerializable()
+class FunctionCallAction with _$FunctionCallAction {
+  factory FunctionCallAction({
+    @BU8() required int eNum,
+    // 0: CreateAccount;
+    // 1: DeployContract;
+    // 2: FunctionCall;
+    // 3: Transfer;
+    // 4: Stake;
+    // 5: AddKey;
+    // 6: DeleteKey;
+    // 7: DeleteAccount;
+    @BFunctionCall() required FunctionCall functionCall,
+  }) = _FunctionCallAction;
+
+  FunctionCallAction._();
+
+  factory FunctionCallAction.fromBorsh(Uint8List data) =>
+      _$FunctionCallActionFromBorsh(data);
 }
