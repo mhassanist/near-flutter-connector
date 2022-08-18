@@ -8,7 +8,7 @@ import 'dart:convert';
 import 'package:ed25519_edwards/ed25519_edwards.dart';
 import 'package:flutter/services.dart';
 import 'package:nearflutterconnector/services/local_transaction_api.dart';
-import 'package:nearflutterconnector/models/my_transaction.dart';
+import 'package:nearflutterconnector/models/block_transaction.dart';
 import 'package:nearflutterconnector/services/near_remote_rpc_api.dart';
 import 'package:nearflutterconnector/services/remote_transaction_serializer.dart';
 import 'package:nearflutterconnector/services/wallet.dart';
@@ -24,7 +24,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   KeyPair? keyPair;
   bool requestedFullAccess = false;
-  MyTransaction transaction = MyTransaction();
+  BlockTransaction transaction = BlockTransaction();
 
   @override
   void initState() {
@@ -185,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: TextField(
             onChanged: (value) {
               setState(() {
-                transaction.contractId = value.replaceAll(' ', '');
+                transaction.receiver = value.replaceAll(' ', '');
               });
             },
             decoration: const InputDecoration(labelText: "Contract ID"),
@@ -263,8 +263,8 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildSendNearButton() {
     return ElevatedButton(
       onPressed: () async {
-        if (transaction.contractId != null &&
-            transaction.contractId != '' &&
+        if (transaction.receiver != null &&
+            transaction.receiver != '' &&
             transaction.amount != null &&
             double.parse(transaction.amount!) > 0 &&
             transaction.sender != null &&
@@ -272,7 +272,7 @@ class _MyHomePageState extends State<MyHomePage> {
             keyPair != null) {
           transaction.hash = null;
           transaction.actionType = 'transfer';
-          transaction.receiver = transaction.contractId;
+          transaction.receiver = transaction.receiver;
           setState(() {});
           await _sendTransaction();
           setState(() {});
@@ -287,8 +287,8 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildCallMethodButton() {
     return ElevatedButton(
       onPressed: () async {
-        if (transaction.contractId != null &&
-            transaction.contractId != '' &&
+        if (transaction.receiver != null &&
+            transaction.receiver != '' &&
             transaction.methodName != null &&
             transaction.methodName != '' &&
             transaction.sender != null &&
@@ -298,7 +298,7 @@ class _MyHomePageState extends State<MyHomePage> {
           transaction.actionType = 'function_call';
           transaction.methodArgs =
               jsonDecode(transaction.methodArgsString as String);
-          transaction.receiver = transaction.contractId;
+          transaction.receiver = transaction.receiver;
           setState(() {});
           await _sendTransaction();
           setState(() {});
@@ -320,9 +320,9 @@ class _MyHomePageState extends State<MyHomePage> {
     // Uint8List remoteHashedSerializedTx =
     //     Utils.listFromMap(remoteSerializedTransaction);
     Uint8List serializedTransaction =
-        LocalTransactionAPI.serializeTransaction(transaction);
-    Uint8List hashedSerializedTx =
-        Uint8List.fromList(sha256.convert(serializedTransaction).bytes);
+    LocalTransactionAPI.serializeTransaction(transaction);
+    Uint8List hashedSerializedTx = LocalTransactionAPI.toSHA256(serializedTransaction);
+
     try {
       transaction.signature = LocalTransactionAPI.signTransaction(
           keyPair!.privateKey, hashedSerializedTx);
@@ -411,8 +411,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ElevatedButton(
           onPressed: () {
             if (keyPair != null &&
-                transaction.contractId != null &&
-                transaction.contractId != '') {
+                transaction.receiver != null &&
+                transaction.receiver != '') {
               Wallet.requestFullAccess(keyPair);
               setState(() {
                 requestedFullAccess = true;
@@ -426,9 +426,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ElevatedButton(
           onPressed: () {
             if (keyPair != null &&
-                transaction.contractId != null &&
-                transaction.contractId != '') {
-              Wallet.requestFunctionCallAccess(keyPair, transaction.contractId);
+                transaction.receiver != null &&
+                transaction.receiver != '') {
+              Wallet.requestFunctionCallAccess(keyPair, transaction.receiver);
               setState(() {
                 requestedFullAccess = false;
               });

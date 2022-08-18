@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'transaction.dart';
+part of 'transfer_transaction.dart';
 
 // **************************************************************************
 // BorshSerializableGenerator

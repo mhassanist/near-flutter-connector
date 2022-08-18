@@ -1,7 +1,9 @@
 import 'package:borsh_annotation/borsh_annotation.dart';
-import 'package:nearflutterconnector/models/action.dart';
+import 'package:nearflutterconnector/models/actions/action_transfer.dart';
 import 'package:nearflutterconnector/models/public_key.dart';
-part 'transaction.g.dart';
+
+import '../actions/action_function_call.dart';
+part 'transfer_transaction.g.dart';
 
 @BorshSerializable()
 class TransferTransaction with _$TransferTransaction {

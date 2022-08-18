@@ -1,5 +1,4 @@
-class MyTransaction {
-  String? contractId;
+class BlockTransaction {
   String? actionType;
   String? sender;
   String? publicKey;
