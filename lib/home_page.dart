@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:borsh_annotation/borsh_annotation.dart';
-import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:convert';
@@ -10,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:nearflutterconnector/services/local_transaction_api.dart';
 import 'package:nearflutterconnector/models/block_transaction.dart';
 import 'package:nearflutterconnector/services/near_remote_rpc_api.dart';
-import 'package:nearflutterconnector/services/remote_transaction_serializer.dart';
 import 'package:nearflutterconnector/services/wallet.dart';
 import 'package:nearflutterconnector/utils/constants.dart';
 import 'package:nearflutterconnector/utils/utils.dart';
@@ -315,10 +313,6 @@ class _MyHomePageState extends State<MyHomePage> {
     var accessKey = await RpcApi.getAccessKey(transaction);
     transaction.nonce = ++accessKey['nonce'];
     transaction.blockHash = accessKey['block_hash'];
-    // Map remoteSerializedTransaction =
-    //     await RemoteTransactionSerializer.serializeTransaction(transaction);
-    // Uint8List remoteHashedSerializedTx =
-    //     Utils.listFromMap(remoteSerializedTransaction);
     Uint8List serializedTransaction =
         LocalTransactionAPI.serializeTransaction(transaction);
     Uint8List hashedSerializedTx =
@@ -327,9 +321,6 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       transaction.signature = LocalTransactionAPI.signTransaction(
           keyPair!.privateKey, hashedSerializedTx);
-      // transaction.hash =
-      //     await RemoteTransactionSerializer.serializeSignedTransaction(
-      //         transaction);
       Uint8List signedTransactionSerialization =
           LocalTransactionAPI.serializeSignedTransaction(transaction);
       transaction.hash = base64Encode(signedTransactionSerialization);
