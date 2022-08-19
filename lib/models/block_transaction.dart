@@ -1,3 +1,5 @@
+import 'package:borsh_annotation/borsh_annotation.dart';
+
 class BlockTransaction {
   String? actionType;
   String? sender;
@@ -7,7 +9,7 @@ class BlockTransaction {
   String? networkId;
   String? blockHash;
   int? nonce;
-  Map? signature;
+  Uint8List? signature;
   String? hash;
   String? returnMessage;
   String? methodName;

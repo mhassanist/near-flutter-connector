@@ -320,15 +320,19 @@ class _MyHomePageState extends State<MyHomePage> {
     // Uint8List remoteHashedSerializedTx =
     //     Utils.listFromMap(remoteSerializedTransaction);
     Uint8List serializedTransaction =
-    LocalTransactionAPI.serializeTransaction(transaction);
-    Uint8List hashedSerializedTx = LocalTransactionAPI.toSHA256(serializedTransaction);
+        LocalTransactionAPI.serializeTransaction(transaction);
+    Uint8List hashedSerializedTx =
+        LocalTransactionAPI.toSHA256(serializedTransaction);
 
     try {
       transaction.signature = LocalTransactionAPI.signTransaction(
           keyPair!.privateKey, hashedSerializedTx);
-      transaction.hash =
-          await RemoteTransactionSerializer.serializeSignedTransaction(
-              transaction);
+      // transaction.hash =
+      //     await RemoteTransactionSerializer.serializeSignedTransaction(
+      //         transaction);
+      Uint8List signedTransactionSerialization =
+          LocalTransactionAPI.serializeSignedTransaction(transaction);
+      transaction.hash = base64Encode(signedTransactionSerialization);
       if (transaction.hash!.isNotEmpty) {
         bool transactionSucceeded =
             await RpcApi.broadcastTransaction(transaction);
