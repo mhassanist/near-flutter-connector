@@ -130,12 +130,12 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildTransferStatus() {
     if (transaction.actionType != null &&
         transaction.actionType == 'transfer' &&
-        transaction.hash != null &&
+        transaction.encoded != null &&
         transaction.returnMessage != null) {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
-          _buildCopyableText("Tx. Hash", transaction.hash!),
+          _buildCopyableText("Tx. Encoded", transaction.encoded!),
           _buildTransactionMessage(transaction.returnMessage!),
         ],
       );
@@ -147,12 +147,12 @@ class _MyHomePageState extends State<MyHomePage> {
   _buildMethodCallStatus() {
     if (transaction.actionType != null &&
         transaction.actionType == 'function_call' &&
-        transaction.hash != null &&
-        transaction.hash != null) {
+        transaction.encoded != null &&
+        transaction.encoded != null) {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
-          _buildCopyableText("Tx. Hash", transaction.hash!),
+          _buildCopyableText("Tx. Encoded", transaction.encoded!),
           _buildTransactionMessage(transaction.returnMessage!),
         ],
       );
@@ -268,7 +268,7 @@ class _MyHomePageState extends State<MyHomePage> {
             transaction.sender != null &&
             transaction.sender != '' &&
             keyPair != null) {
-          transaction.hash = null;
+          transaction.encoded = null;
           transaction.actionType = 'transfer';
           transaction.receiver = transaction.receiver;
           setState(() {});
@@ -292,7 +292,7 @@ class _MyHomePageState extends State<MyHomePage> {
             transaction.sender != null &&
             transaction.sender != '' &&
             keyPair != null) {
-          transaction.hash = null;
+          transaction.encoded = null;
           transaction.actionType = 'function_call';
           transaction.methodArgs =
               jsonDecode(transaction.methodArgsString as String);
@@ -313,18 +313,22 @@ class _MyHomePageState extends State<MyHomePage> {
     var accessKey = await RpcApi.getAccessKey(transaction);
     transaction.nonce = ++accessKey['nonce'];
     transaction.blockHash = accessKey['block_hash'];
+
     Uint8List serializedTransaction =
         LocalTransactionAPI.serializeTransaction(transaction);
     Uint8List hashedSerializedTx =
         LocalTransactionAPI.toSHA256(serializedTransaction);
 
+    transaction.signature = LocalTransactionAPI.signTransaction(
+        keyPair!.privateKey, hashedSerializedTx);
+
+    Uint8List signedTransactionSerialization =
+        LocalTransactionAPI.serializeSignedTransaction(transaction);
+    transaction.encoded =
+        LocalTransactionAPI.encodeSerialization(signedTransactionSerialization);
+
     try {
-      transaction.signature = LocalTransactionAPI.signTransaction(
-          keyPair!.privateKey, hashedSerializedTx);
-      Uint8List signedTransactionSerialization =
-          LocalTransactionAPI.serializeSignedTransaction(transaction);
-      transaction.hash = base64Encode(signedTransactionSerialization);
-      if (transaction.hash!.isNotEmpty) {
+      if (transaction.encoded!.isNotEmpty) {
         bool transactionSucceeded =
             await RpcApi.broadcastTransaction(transaction);
         transactionSucceeded

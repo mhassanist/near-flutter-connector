@@ -10,7 +10,7 @@ class BlockTransaction {
   String? blockHash;
   int? nonce;
   Uint8List? signature;
-  String? hash;
+  String? encoded;
   String? returnMessage;
   String? methodName;
   String? methodArgsString = '{}';

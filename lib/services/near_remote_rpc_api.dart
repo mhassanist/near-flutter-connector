@@ -31,14 +31,14 @@ class RpcApi {
   }
 
   //broadcastTransaction
-  static Future<bool>broadcastTransaction(BlockTransaction transaction) async {
+  static Future<bool> broadcastTransaction(BlockTransaction transaction) async {
     String url = Constants.nearRPCUrl;
 
     var body = json.encode({
       "jsonrpc": "2.0",
       "id": "dontcare",
       "method": "broadcast_tx_commit",
-      "params": [transaction.hash]
+      "params": [transaction.encoded]
     });
     Map<String, String> headers = {};
     headers[Constants.contentType] = Constants.applicationJson;

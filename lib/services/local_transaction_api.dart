@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:bs58/bs58.dart';
 import 'package:crypto/crypto.dart';
@@ -11,7 +12,6 @@ import 'package:nearflutterconnector/models/transactions/transaction_transfer.da
 import 'package:nearflutterconnector/utils/constants.dart';
 import 'package:nearflutterconnector/utils/utils.dart';
 import 'package:ed25519_edwards/ed25519_edwards.dart' as ed;
-
 import '../models/actions/action_function_call.dart';
 import '../models/transactions/transaction_function_call.dart';
 
@@ -117,5 +117,9 @@ class LocalTransactionAPI {
     return SignedFunctionCallTransaction(
         functionCallTransaction: functionCallTransaction,
         signature: Signature(keyType: 0, data: signature));
+  }
+
+  static encodeSerialization(Uint8List serialization) {
+    return base64Encode(serialization);
   }
 }
