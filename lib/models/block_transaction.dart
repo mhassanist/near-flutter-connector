@@ -1,5 +1,6 @@
-class MyTransaction {
-  String? contractId;
+import 'package:borsh_annotation/borsh_annotation.dart';
+
+class BlockTransaction {
   String? actionType;
   String? sender;
   String? publicKey;
@@ -8,10 +9,11 @@ class MyTransaction {
   String? networkId;
   String? blockHash;
   int? nonce;
-  Map? signature;
-  String? hash;
+  Uint8List? signature;
+  String? encoded;
   String? returnMessage;
   String? methodName;
+  String? methodArgsString = '{}';
   Map<String, dynamic>? methodArgs;
 
   Map<String, dynamic> toJson() => {

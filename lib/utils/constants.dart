@@ -27,4 +27,5 @@ class Constants {
   static const String iosPackageName = 'com.example.nearConnector';
   static const bool isShortDunamicLink = false;
   static const String repoUrl = 'https://github.com/azmasamy/near_connector';
+  static const int defaultGas = 30000000000000;
 }
