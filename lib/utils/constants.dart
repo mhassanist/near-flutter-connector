@@ -8,7 +8,7 @@ class Constants {
   static const String localServer = 'http://10.0.2.2:8080';
   static const String globalServer =
       'https://near-transaction-serializer.herokuapp.com';
-  static const String currentServer = localServer;
+  static const String currentServer = globalServer;
   static const String nearSerializeTransactionUrl =
       '$currentServer/serializeTransaction';
   static const String nearSerializeSignedTransactionUrl =
