@@ -331,7 +331,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (transaction.amount != null &&
         transaction.amount != '0' &&
-        transaction.actionType == 'function_call') {
+        transaction.actionType == 'function_call' && !requestedFullAccess) {
       String transactionEncoded =
           LocalTransactionAPI.encodeSerialization(serializedTransaction);
       Wallet.requestDepositApproval(
