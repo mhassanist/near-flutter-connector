@@ -71,7 +71,7 @@ class LocalTransactionAPI {
                   methodName: transaction.methodName as String,
                   args: transaction.methodArgsString as String,
                   gas: BigInt.from(Constants.defaultGas),
-                  deposit: Utils.decodeNearDeposit("0")))
+                  deposit: Utils.decodeNearDeposit(transaction.amount ?? '0')))
         ],
         blockHash: base58.decode(transaction.blockHash as String),
         nonce: BigInt.from(transaction.nonce as int),

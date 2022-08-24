@@ -47,6 +47,6 @@ class RpcApi {
         await http.post(Uri.parse(url), headers: headers, body: body);
 
     Map jsonBody = jsonDecode(responseData.body);
-    return jsonBody.containsKey('result');
+    return jsonBody.  containsKey('result');
   }
 }

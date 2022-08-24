@@ -20,4 +20,12 @@ class Wallet {
     await launchUrl(Uri.parse(url),
         mode: LaunchMode.externalNonBrowserApplication);
   }
+
+  //request transaction deposit approval from wallet
+  static requestDepositApproval(
+      String encodedTransaction, String callbackUrl) async {
+    String url =
+        '${Constants.approveTransactionDepositUrl}transactions=${Uri.encodeComponent(encodedTransaction)}&callbackUrl=$callbackUrl';
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalNonBrowserApplication);
+  }
 }

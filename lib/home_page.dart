@@ -148,7 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (transaction.actionType != null &&
         transaction.actionType == 'function_call' &&
         transaction.encoded != null &&
-        transaction.encoded != null) {
+        transaction.encoded != '') {
       return Column(
         children: [
           _buildCopyableText("Signature", transaction.signature.toString()),
@@ -156,6 +156,11 @@ class _MyHomePageState extends State<MyHomePage> {
           _buildTransactionMessage(transaction.returnMessage!),
         ],
       );
+    } else if (transaction.actionType != null &&
+        transaction.actionType == 'function_call' &&
+        transaction.returnMessage != null &&
+        transaction.returnMessage != '') {
+      return _buildTransactionMessage(transaction.returnMessage!);
     } else {
       return Container();
     }
@@ -270,6 +275,7 @@ class _MyHomePageState extends State<MyHomePage> {
             keyPair != null) {
           transaction.encoded = null;
           transaction.actionType = 'transfer';
+          transaction.returnMessage = '';
           transaction.receiver = transaction.receiver;
           setState(() {});
           await _sendTransaction();
@@ -294,6 +300,7 @@ class _MyHomePageState extends State<MyHomePage> {
             keyPair != null) {
           transaction.encoded = null;
           transaction.actionType = 'function_call';
+          transaction.returnMessage = '';
           transaction.methodArgs =
               jsonDecode(transaction.methodArgsString as String);
           transaction.receiver = transaction.receiver;
@@ -322,22 +329,32 @@ class _MyHomePageState extends State<MyHomePage> {
     transaction.signature = LocalTransactionAPI.signTransaction(
         keyPair!.privateKey, hashedSerializedTx);
 
-    Uint8List signedTransactionSerialization =
-        LocalTransactionAPI.serializeSignedTransaction(transaction);
-    transaction.encoded =
-        LocalTransactionAPI.encodeSerialization(signedTransactionSerialization);
-
-    try {
-      if (transaction.encoded!.isNotEmpty) {
-        bool transactionSucceeded =
-            await RpcApi.broadcastTransaction(transaction);
-        transactionSucceeded
-            ? transaction.returnMessage = Constants.transactionSuccessMessage
-            : transaction.returnMessage = Constants.transactionFailedMessage;
-      }
-    } catch (exp) {
-      if (kDebugMode) {
-        print("EXCEPTION: $exp");
+    if (transaction.amount != null &&
+        transaction.amount != '0' &&
+        transaction.actionType == 'function_call') {
+      String transactionEncoded =
+          LocalTransactionAPI.encodeSerialization(serializedTransaction);
+      Wallet.requestDepositApproval(
+          transactionEncoded, Constants.nearSignInSuccessUrl);
+      transaction.returnMessage = Constants.approveTransactionWalletMessaage;
+      transaction.encoded = '';
+    } else {
+      Uint8List signedTransactionSerialization =
+          LocalTransactionAPI.serializeSignedTransaction(transaction);
+      transaction.encoded = LocalTransactionAPI.encodeSerialization(
+          signedTransactionSerialization);
+      try {
+        if (transaction.encoded!.isNotEmpty) {
+          bool transactionSucceeded =
+              await RpcApi.broadcastTransaction(transaction);
+          transactionSucceeded
+              ? transaction.returnMessage = Constants.transactionSuccessMessage
+              : transaction.returnMessage = Constants.transactionFailedMessage;
+        }
+      } catch (exp) {
+        if (kDebugMode) {
+          print("EXCEPTION: $exp");
+        }
       }
     }
   }
